@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import app
-from atlas.lookup import lookup
+from plotip.lookup import lookup
 
 client = TestClient(app)
 
@@ -126,3 +126,76 @@ def test_region_names_prefer_canonical_names_and_reject_equal_aliases():
         assert regions[("US", "washington")]["region_id"] == "state"
         assert regions[("US", "districtofcolumbia")]["region_id"] == "district"
         assert ("US", "shared") not in regions
+
+
+@pytest.mark.parametrize("area", ["country:US", "region:USA-3519", "country:CN"])
+@pytest.mark.parametrize("version", [4, 6])
+def test_reverse_ranges_match_forward_lookup_and_exact_cidrs(area, version):
+    from ipaddress import ip_address, ip_network
+
+    response = client.get("/api/ranges", params={"area": area, "version": version})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 20
+    assert data["total_ranges"] >= 20
+    assert isinstance(data["address_count"], str)
+    assert len(response.content) < 40000
+    assert response.headers["cache-control"].startswith("public")
+    for item in data["items"]:
+        first, last = ip_address(item["start"]), ip_address(item["end"])
+        assert first.version == last.version == version
+        cursor = int(first)
+        for cidr in item["cidrs"]:
+            network = ip_network(cidr)
+            assert int(network.network_address) == cursor
+            cursor += network.num_addresses
+        assert cursor == int(last) + 1
+        assert int(item["address_count"]) == int(last) - int(first) + 1
+        for address in (first, last):
+            forward = lookup(str(address))
+            assert forward["scope"] == "public"
+            assert forward["country_code"] == data["area"]["country_code"]
+            assert forward["region"] == item["region"]
+            assert forward["city"] == item["city"]
+            assert forward["isp"] == item["isp"]
+    second = client.get(
+        "/api/ranges", params={"area": area, "version": version, "after": data["next_cursor"]}
+    ).json()
+    assert second["total_ranges"] == data["total_ranges"]
+    assert all(item["id"] > data["next_cursor"] for item in second["items"])
+    assert not ({x["id"] for x in data["items"]} & {x["id"] for x in second["items"]})
+
+
+def test_reverse_area_catalog_empty_results_and_bad_requests():
+    countries = client.get("/api/areas").json()["items"]
+    assert any(a["id"] == "country:US" for a in countries)
+    states = client.get("/api/areas?country=US").json()["items"]
+    assert any(a["name"] == "Washington" for a in states)
+    assert any(a["name"] == "District of Columbia" for a in states)
+    for params in (
+        {"area": "country:US", "version": 5},
+        {"area": "country:US", "after": -1},
+        {"area": "country:US", "after": 2**64},
+        {"area": "' OR 1=1"},
+    ):
+        assert client.get("/api/ranges", params=params).status_code == 422
+    assert client.get("/api/ranges?area=region:nonexistent").status_code == 404
+    assert client.get("/api/areas?country=ZZ").status_code == 404
+    assert client.get("/api/ranges?area=country:US&after=9223372036854775807").json()["items"] == []
+    assert client.get("/data/ranges.sqlite").status_code == 404
+
+
+def test_reverse_index_is_readonly_and_queries_use_an_index():
+    import sqlite3
+
+    from plotip.ranges import connect
+
+    with connect() as db:
+        with pytest.raises(sqlite3.OperationalError):
+            db.execute("DELETE FROM ranges")
+        for field in ("country", "region"):
+            plan = db.execute(
+                f"EXPLAIN QUERY PLAN SELECT * FROM ranges WHERE {field}=? AND version=? AND id>? ORDER BY id LIMIT 21",
+                (1, 4, 0),
+            ).fetchall()
+            assert any(f"USING INDEX ranges_{field}" in row[3] for row in plan)

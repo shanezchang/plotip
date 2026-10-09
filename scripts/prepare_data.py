@@ -6,6 +6,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 import unicodedata
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
@@ -15,6 +16,8 @@ import geonamescache
 from shapely.geometry import Point, mapping, shape
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def norm(value):
@@ -100,6 +103,7 @@ def main():
         point = Point(p["LABEL_X"], p["LABEL_Y"])
         if not largest.covers(point):
             point = largest.representative_point()
+        f["properties"]["bounds"] = list(largest.bounds)
         countries[code] = {
             "bounds": list(largest.bounds),
             "longitude": point.x,
@@ -162,7 +166,19 @@ def main():
         outlines["features"].append(
             {
                 "type": "Feature",
-                "properties": {"id": feature["properties"]["adm1_code"]},
+                "properties": {
+                    "id": feature["properties"]["adm1_code"],
+                    "code": feature["properties"]["iso_a2"],
+                    "name": feature["properties"]["name"],
+                    "zh": feature["properties"].get("name_zh") or feature["properties"]["name"],
+                    "bounds": list(
+                        (
+                            max(shape(feature["geometry"]).geoms, key=lambda g: g.area)
+                            if feature["geometry"]["type"] == "MultiPolygon"
+                            else shape(feature["geometry"])
+                        ).bounds
+                    ),
+                },
                 "geometry": mapping(
                     shape(feature["geometry"]).simplify(0.02, preserve_topology=True)
                 ),
@@ -172,7 +188,12 @@ def main():
     commit = subprocess.check_output(
         ["git", "-C", str(args.ip2region), "rev-parse", "HEAD"], text=True
     ).strip()
+    from scripts.build_ranges import build_ranges
+
+    reverse = build_ranges(args.ip2region, ROOT, countries, provinces, province_geo, commit)
+    reverse["sha256"] = hashlib.sha256((ROOT / "data/ranges.sqlite").read_bytes()).hexdigest()
     metadata = {
+        "reverse_index": reverse,
         "ip2region_commit": commit,
         "prepared": datetime.now(UTC).date().isoformat(),
         "natural_earth_commit": "ca96624a56bd078437bca8184e78163e5039ad19",

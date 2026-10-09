@@ -23,3 +23,7 @@ The previous green full-height rail felt generic and repeated too much informati
 - A regional lookup highlights that region, uses its extent for framing, and places a reference marker inside its main polygon. It does not claim device coordinates.
 - Canonical administrative names outrank translated names and aliases. Ties are unresolved rather than overwritten by file order. Washington state and District of Columbia have separate mappings.
 - The session-history key is versioned to discard cached coordinates from before the correction.
+
+## Reverse lookup
+
+The IP lookup / IP ranges switch changes the existing rail, not the workspace. Clicking a map polygon selects the corresponding country or state; a map-level selector makes the selection granularity explicit. Country/state selects provide keyboard and touch alternatives. Rows show actual interval endpoints; details disclose CIDRs and original locality/network records. IPv4/IPv6 and Previous/Next operate on the current place. Empty/error/loading states remain within the same panel. Mobile selectors share a row to leave space for results and the map.

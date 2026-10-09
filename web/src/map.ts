@@ -1,7 +1,7 @@
 import * as maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import type { FeatureCollection, LineString } from "geojson";
-import type { Result, Lang } from "./types";
+import type { Area, Result, Lang } from "./types";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -31,7 +31,7 @@ for (let y = -60; y <= 60; y += 30)
     },
   });
 
-export class AtlasMap {
+export class PlotipMap {
   private map?: maplibregl.Map;
   private markers: maplibregl.Marker[] = [];
   private labels: {
@@ -45,7 +45,13 @@ export class AtlasMap {
   private lang: Lang = "zh";
   private ready = false;
   private dark = false;
-  constructor(private onSelect: (r: Result) => void) {}
+  private area?: Area;
+  private level: "country" | "region" = "country";
+  constructor(
+    private onSelect: (r: Result) => void,
+    private onArea: (area: Area) => void,
+    private onOcean: () => void,
+  ) {}
   async init(dark: boolean) {
     this.dark = dark;
     try {
@@ -103,6 +109,26 @@ export class AtlasMap {
               "line-width": 0.65,
               "line-opacity": 0.65,
             },
+          },
+          {
+            id: "regions-hit",
+            type: "fill",
+            source: "regions",
+            paint: { "fill-opacity": 0 },
+          },
+          {
+            id: "hover-country",
+            type: "fill",
+            source: "world",
+            filter: ["==", ["get", "code"], ""],
+            paint: { "fill-color": "#315be8", "fill-opacity": 0.08 },
+          },
+          {
+            id: "hover-region",
+            type: "fill",
+            source: "regions",
+            filter: ["==", ["get", "id"], ""],
+            paint: { "fill-color": "#315be8", "fill-opacity": 0.08 },
           },
           {
             id: "selected",
@@ -180,16 +206,41 @@ export class AtlasMap {
         this.theme(this.dark);
         this.updateLabels();
         this.render();
-        if (this.active?.location) this.focus(this.active);
+        if (this.area) this.focusArea(this.area);
+        else if (this.active?.location) this.focus(this.active);
         document.getElementById("map-loading")!.hidden = true;
         document.getElementById("map")!.dataset.ready = "true";
       });
       this.map.on("zoom", () => this.updateLabels());
       this.map.on("resize", () => {
-        if (this.active?.location) this.focus(this.active);
+        if (this.area) this.focusArea(this.area);
+        else if (this.active?.location) this.focus(this.active);
         else this.map?.setPadding(this.padding());
       });
+      this.map.on("click", (event) => {
+        const area = this.pick(event.point);
+        if (area) this.onArea(area);
+        else this.onOcean();
+      });
+      this.map.on("mouseout", () => this.clearHover());
       this.map.on("mousemove", (event) => {
+        const area = this.pick(event.point);
+        this.map!.getCanvas().style.cursor = area ? "pointer" : "";
+        const hover = document.getElementById("map-hover")!;
+        hover.hidden = !area;
+        if (area)
+          hover.textContent =
+            this.lang === "zh" ? area.zh || area.name : area.name;
+        this.map!.setFilter("hover-country", [
+          "==",
+          ["get", "code"],
+          area?.level === "country" ? area.country_code : "",
+        ]);
+        this.map!.setFilter("hover-region", [
+          "==",
+          ["get", "id"],
+          area?.level === "region" ? area.id.slice(7) : "",
+        ]);
         document.getElementById("map-coordinates")!.textContent =
           `${Math.abs(event.lngLat.lat).toFixed(1)}° ${event.lngLat.lat >= 0 ? "N" : "S"}   ${Math.abs(event.lngLat.lng).toFixed(1)}° ${event.lngLat.lng >= 0 ? "E" : "W"}`;
       });
@@ -200,6 +251,54 @@ export class AtlasMap {
     } catch {
       this.failure();
     }
+  }
+  setLevel(level: "country" | "region") {
+    this.level = level;
+    this.clearHover();
+  }
+  private clearHover() {
+    if (!this.ready || !this.map) return;
+    document.getElementById("map-hover")!.hidden = true;
+    this.map.setFilter("hover-country", ["==", ["get", "code"], ""]);
+    this.map.setFilter("hover-region", ["==", ["get", "id"], ""]);
+  }
+  private pick(point: maplibregl.Point): Area | undefined {
+    if (!this.ready || !this.map) return;
+    const feature = this.map.queryRenderedFeatures(point, {
+      layers: [this.level === "country" ? "land" : "regions-hit"],
+    })[0];
+    const p = feature?.properties;
+    if (!p || !/^[A-Z]{2}$/.test(p.code)) return;
+    return {
+      id: this.level === "country" ? `country:${p.code}` : `region:${p.id}`,
+      level: this.level,
+      country_code: p.code,
+      name: p.name,
+      zh: p.zh,
+      bounds: typeof p.bounds === "string" ? JSON.parse(p.bounds) : p.bounds,
+    };
+  }
+  selectArea(area: Area) {
+    this.area = area;
+    this.render();
+    if (this.ready) this.focusArea(area);
+  }
+  private focusArea(area: Area) {
+    const [w, s, e, n] = area.bounds;
+    this.map?.fitBounds(
+      [
+        [w, s],
+        [e, n],
+      ],
+      {
+        padding: this.padding(),
+        absolutePadding: true,
+        maxZoom: 5,
+        duration: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? 0
+          : 500,
+      },
+    );
   }
   private failure() {
     const el = document.getElementById("map-loading")!;
@@ -244,6 +343,7 @@ export class AtlasMap {
       );
   }
   update(results: Result[], active?: Result, fly = true) {
+    this.area = undefined;
     this.results = results;
     this.active = active;
     this.render();
@@ -299,7 +399,7 @@ export class AtlasMap {
     if (!this.ready || !this.map) return;
     this.markers.forEach((m) => m.remove());
     this.markers = [];
-    for (const r of [...this.results].reverse()) {
+    for (const r of this.area ? [] : [...this.results].reverse()) {
       if (!r.location) continue;
       const selected = r.ip === this.active?.ip;
       const button = document.createElement("button");
@@ -324,7 +424,10 @@ export class AtlasMap {
                   : r.country) || r.location.name;
         button.append(label);
       }
-      button.onclick = () => this.onSelect(r);
+      button.onclick = (event) => {
+        event.stopPropagation();
+        this.onSelect(r);
+      };
       this.markers.push(
         new maplibregl.Marker({ element: button, anchor: "center" })
           .setLngLat([r.location.longitude, r.location.latitude])
@@ -335,13 +438,18 @@ export class AtlasMap {
       this.map.setFilter(layer, [
         "==",
         ["get", "id"],
-        this.active?.location?.region_id || "",
+        this.area
+          ? this.area.level === "region"
+            ? this.area.id.slice(7)
+            : ""
+          : this.active?.location?.region_id || "",
       ]);
     for (const layer of ["selected", "selected-outline"])
       this.map.setFilter(layer, [
         "==",
         ["get", "code"],
-        this.active?.location ? this.active.country_code || "" : "",
+        this.area?.country_code ||
+          (this.active?.location ? this.active.country_code || "" : ""),
       ]);
   }
 }

@@ -19,8 +19,9 @@ import {
   ArrowRight,
   Info,
 } from "lucide";
-import type { AtlasMap } from "./map";
-import type { Lang, Result } from "./types";
+import type { PlotipMap } from "./map";
+import type { Area, Lang, Result } from "./types";
+import { RangePanel } from "./ranges";
 
 const icons = {
   Search,
@@ -71,8 +72,10 @@ const persist = (key: string, value: string) => {
 };
 let lang: Lang =
   (stored("plotip-lang") ?? stored("atlas-lang")) === "zh" ? "zh" : "en";
-let dark = stored("atlas-theme")
-  ? stored("atlas-theme") === "dark"
+// Preserve preferences saved before the Plotip rename.
+const savedTheme = stored("plotip-theme") ?? stored("atlas-theme");
+let dark = savedTheme
+  ? savedTheme === "dark"
   : matchMedia("(prefers-color-scheme: dark)").matches;
 let active: Result | undefined;
 let history: Result[] = [];
@@ -90,7 +93,7 @@ const text = {
     try: "试试看",
     examples: ["南京", "加利福尼亚", "深圳 · IPv6"],
     emptyTitle: "把地址放回地图。",
-    emptyBody: "输入 IP，或从上面的示例开始。",
+    emptyBody: "输入 IP，或点击地图查看地区 IP 段。",
     recent: "本次查询",
     clear: "清空",
     emptyRecent: "查询过的地址会留在这里。",
@@ -151,11 +154,11 @@ const text = {
     examples: ["Nanjing", "California", "Shenzhen · IPv6"],
     emptyTitle: "A world behind the numbers.",
     emptyBody:
-      "Find a country, region and network. See where an IP belongs on the map.",
+      "Look up an address, or click the map to explore regional IP ranges.",
     recent: "This session",
     clear: "Clear",
     emptyRecent: "Your lookups will appear here.",
-    world: "World atlas",
+    world: "World map",
     overview: "World view",
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
@@ -231,10 +234,48 @@ try {
 $("app").innerHTML = `
 <a class="skip-link" href="#ip-input">${lang === "zh" ? "跳到查询" : "Skip to lookup"}</a>
 <header class="masthead"><a class="brand" href="/" aria-label="Plotip"><img src="/favicon.svg" width="32" height="32" alt=""/><span class="brand-word">plotip</span><span class="brand-chinese">落点</span></a><span class="masthead-caption" id="header-caption"></span><nav aria-label="Site controls"><button id="lang" class="text-button">EN</button><button id="theme" class="icon-button"></button><a class="github-link" href="https://github.com/shanezchang/plotip" target="_blank" rel="noopener noreferrer">${icon("Github")}<span>GitHub</span>${icon("ArrowUpRight")}</a></nav></header>
-<main class="workspace"><aside class="rail"><section class="query-section"><h1 id="tagline"></h1><p id="intro" class="intro"></p><form id="query-form" novalidate><label for="ip-input" id="input-label"></label><div class="input-wrap"><input id="ip-input" name="ip" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" aria-describedby="error" required/><kbd>/</kbd></div><div class="query-actions"><button type="submit" id="submit" class="primary"></button><button type="button" id="my-ip" class="secondary"></button></div><p id="error" class="error" role="alert" hidden></p><p id="status" class="sr-only" role="status"></p></form><div class="examples"><span id="try-label"></span><div id="examples"></div></div></section><section id="result" class="result-section" aria-live="polite" aria-atomic="true"></section><section class="history-section"><div class="section-heading"><h2 id="recent-label"></h2><button id="clear-history" class="text-button"></button></div><div id="history"></div><p class="history-note" id="local-note"></p></section><footer class="rail-footer"><button id="about-button" class="text-button"></button><span>by <a href="https://github.com/shanezchang" target="_blank" rel="noopener noreferrer">Shane</a></span></footer></aside><section class="map-panel" aria-label="Interactive world map"><div id="map"></div><div class="map-heading"><span class="map-heading-dot"></span><span id="world-label"></span></div><div id="map-loading" role="status"></div><div class="map-controls"><button id="reset-map" class="icon-button">${icon("Globe2")}</button><div class="zoom-controls"><button id="zoom-in" class="icon-button">${icon("Plus")}</button><button id="zoom-out" class="icon-button">${icon("Minus")}</button></div></div><div class="map-footer"><span id="map-coordinates">30° N &nbsp; 60° E</span><span id="map-note"></span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div></section></main>
+<main class="workspace" id="workspace" data-mode="lookup"><aside class="rail"><div class="mode-switch" role="group" aria-label="Lookup mode"><button id="mode-lookup" aria-pressed="true"></button><button id="mode-ranges" aria-pressed="false"></button></div><section id="ranges-panel" class="ranges-panel" hidden></section><section class="query-section"><h1 id="tagline"></h1><p id="intro" class="intro"></p><form id="query-form" novalidate><label for="ip-input" id="input-label"></label><div class="input-wrap"><input id="ip-input" name="ip" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" aria-describedby="error" required/><kbd>/</kbd></div><div class="query-actions"><button type="submit" id="submit" class="primary"></button><button type="button" id="my-ip" class="secondary"></button></div><p id="error" class="error" role="alert" hidden></p><p id="status" class="sr-only" role="status"></p></form><div class="examples"><span id="try-label"></span><div id="examples"></div></div></section><section id="result" class="result-section" aria-live="polite" aria-atomic="true"></section><section class="history-section"><div class="section-heading"><h2 id="recent-label"></h2><button id="clear-history" class="text-button"></button></div><div id="history"></div><p class="history-note" id="local-note"></p></section><footer class="rail-footer"><button id="about-button" class="text-button"></button><span>by <a href="https://github.com/shanezchang" target="_blank" rel="noopener noreferrer">Shane</a></span></footer></aside><section class="map-panel" aria-label="Interactive world map"><div id="map"></div><div class="map-heading"><label id="map-level-label" for="map-level"></label><select id="map-level"><option value="country"></option><option value="region"></option></select></div><div id="map-hover" hidden></div><div id="map-loading" role="status"></div><div class="map-controls"><button id="reset-map" class="icon-button">${icon("Globe2")}</button><div class="zoom-controls"><button id="zoom-in" class="icon-button">${icon("Plus")}</button><button id="zoom-out" class="icon-button">${icon("Minus")}</button></div></div><div class="map-footer"><span id="map-coordinates">30° N &nbsp; 60° E</span><span id="map-note"></span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div></section></main>
 <dialog id="about-dialog" aria-labelledby="about-title"><button id="close-dialog" class="icon-button dialog-close">${icon("X")}</button><div id="about-content"></div></dialog><div id="toast" role="status" hidden></div>`;
 
-let atlas: AtlasMap | undefined;
+let mapView: PlotipMap | undefined;
+let mode: "lookup" | "ranges" = "lookup";
+let selectedArea: Area | undefined;
+const rangePanel = new RangePanel(
+  $("ranges-panel"),
+  (area) => {
+    selectedArea = area;
+    $<HTMLSelectElement>("map-level").value = area.level;
+    mapView?.setLevel(area.level);
+    mapView?.selectArea(area);
+  },
+  (ip) => {
+    showMode("lookup");
+    void query(ip);
+  },
+  toast,
+);
+function showMode(next: "lookup" | "ranges", area?: Area) {
+  mode = next;
+  $("workspace").dataset.mode = next;
+  $("mode-lookup").setAttribute("aria-pressed", String(next === "lookup"));
+  $("mode-ranges").setAttribute("aria-pressed", String(next === "ranges"));
+  $("ranges-panel").hidden = next !== "ranges";
+  if (next === "ranges") {
+    request?.abort();
+    request = undefined;
+    setBusy(false);
+    void rangePanel.open(area);
+  } else {
+    rangePanel.suspend();
+    mapView?.update(history, active);
+  }
+}
+$("mode-lookup").onclick = () => showMode("lookup");
+$("mode-ranges").onclick = () => showMode("ranges");
+$("map-level").onchange = () =>
+  mapView?.setLevel(
+    $<HTMLSelectElement>("map-level").value as "country" | "region",
+  );
 function placeTitle(r: Result): string {
   if (lang === "en" && r.location?.level === "city") return r.location.name;
   return r.city || r.region || r.country || t().unmappedTitle;
@@ -304,7 +345,7 @@ function select(r: Result) {
   $<HTMLInputElement>("ip-input").value = r.ip;
   renderResult();
   renderHistory();
-  atlas?.update(history, r);
+  mapView?.update(history, r);
 }
 function saveHistory() {
   try {
@@ -388,8 +429,8 @@ function renderLanguage() {
   document.querySelector<HTMLElement>(".brand-chinese")!.hidden = lang !== "zh";
   document.title =
     lang === "zh"
-      ? "落点 Plotip — IP 归属地查询"
-      : "Plotip — Find an IP on the map";
+      ? "落点 Plotip — IP 查询与地址段"
+      : "Plotip — IP lookup & ranges";
   for (const [id, key] of Object.entries({
     tagline: "tagline",
     intro: "intro",
@@ -398,13 +439,20 @@ function renderLanguage() {
     "recent-label": "recent",
     "clear-history": "clear",
     "local-note": "local",
-    "world-label": "world",
     "map-note": "mapNote",
     "about-button": "about",
   }))
     $(id).textContent = t()[key as keyof typeof text.zh] as string;
+  $("mode-lookup").textContent = lang === "zh" ? "IP 查询" : "IP lookup";
+  $("mode-ranges").textContent = lang === "zh" ? "IP 段" : "IP ranges";
+  $("map-level-label").textContent =
+    lang === "zh" ? "点击选区" : "Click to explore";
+  const level = $<HTMLSelectElement>("map-level");
+  level.options[0].text = lang === "zh" ? "国家 / 地区" : "Countries";
+  level.options[1].text = lang === "zh" ? "省 / 州" : "States / provinces";
+  rangePanel.language(lang);
   $("header-caption").textContent =
-    lang === "zh" ? "IP 归属地查询" : "An atlas for IP addresses";
+    lang === "zh" ? "IP 查询与地址段" : "IP lookup & ranges";
   $<HTMLInputElement>("ip-input").placeholder = t().placeholder;
   $("my-ip").innerHTML = `${icon("LocateFixed")}${t().my}`;
   $("lang").textContent = lang === "zh" ? "EN" : "中文";
@@ -444,12 +492,12 @@ function renderLanguage() {
   setBusy(busy);
   renderResult();
   renderHistory();
-  atlas?.language(lang);
+  mapView?.language(lang);
 }
 function applyTheme() {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   $("theme").innerHTML = icon(dark ? "Sun" : "Moon");
-  atlas?.theme(dark);
+  mapView?.theme(dark);
 }
 $("query-form").onsubmit = (event) => {
   event.preventDefault();
@@ -458,7 +506,7 @@ $("query-form").onsubmit = (event) => {
 $("my-ip").onclick = () => void query("", true);
 $("theme").onclick = () => {
   dark = !dark;
-  persist("atlas-theme", dark ? "dark" : "light");
+  persist("plotip-theme", dark ? "dark" : "light");
   applyTheme();
 };
 $("lang").onclick = () => {
@@ -476,8 +524,8 @@ $("clear-history").onclick = () => {
   saveHistory();
   renderResult();
   renderHistory();
-  atlas?.update([]);
-  atlas?.overview();
+  mapView?.update([]);
+  mapView?.overview();
   $("error").hidden = true;
 };
 const dialog = $<HTMLDialogElement>("about-dialog");
@@ -502,18 +550,35 @@ document.addEventListener("keydown", (e) => {
     !dialog.open
   ) {
     e.preventDefault();
+    if (mode !== "lookup") showMode("lookup");
     $("ip-input").focus();
   }
 });
 renderLanguage();
 applyTheme();
-atlas?.update(history, undefined, false);
+mapView?.update(history, undefined, false);
 void import("./map")
-  .then(({ AtlasMap }) => {
-    atlas = new AtlasMap((r) => select(r));
-    atlas.language(lang);
-    atlas.update(history, active, false);
-    return atlas.init(dark);
+  .then(({ PlotipMap }) => {
+    mapView = new PlotipMap(
+      (r) => {
+        showMode("lookup");
+        select(r);
+      },
+      (area) => showMode("ranges", area),
+      () =>
+        toast(
+          lang === "zh"
+            ? "这里没有可选地区，请点击陆地。"
+            : "No area here. Click a country or state on land.",
+        ),
+    );
+    mapView.language(lang);
+    mapView.update(history, active, false);
+    if (mode === "ranges" && selectedArea) {
+      mapView.setLevel(selectedArea.level);
+      mapView.selectArea(selectedArea);
+    }
+    return mapView.init(dark);
   })
   .catch(() => {
     $("map-loading").textContent =
