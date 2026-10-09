@@ -2,7 +2,7 @@
 
 Every IP has a place. Look up an address and explore its region on a quiet, interactive map.
 
-[中文](README.zh-CN.md) · [Data & attribution](THIRD_PARTY_NOTICES.md) · [Development](docs/development.md)
+[Live website](https://ip-atlas-app.vercel.app/) · [中文](README.zh-CN.md) · [Data & attribution](THIRD_PARTY_NOTICES.md) · [Development](docs/development.md)
 
 ![IP Atlas](docs/preview.png)
 

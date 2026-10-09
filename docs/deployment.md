@@ -15,3 +15,10 @@ Use Vercel's platform protection and usage monitoring if traffic grows. Applicat
 Verify the linked project with `vercel project inspect --non-interactive`. Deploy with `vercel deploy --prod --skip-domain`, check via `vercel curl --deployment <url>`, then `vercel promote <url>` after successful checks. Never reuse another project's `.vercel/` directory.
 
 A first deployment may receive the production alias automatically. Test it immediately; for subsequent updates keep the old production deployment in place until verification passes.
+
+## This deployment
+
+- Website: https://ip-atlas-app.vercel.app/
+- GitHub: https://github.com/shanezchang/ip-atlas
+- Vercel project: `ip-atlas`, scope `shanes-projects-025e82ba`.
+- The shorter `ip-atlas.vercel.app` and `ipatlas.vercel.app` are owned by others. Do not change those domains.

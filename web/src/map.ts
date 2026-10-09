@@ -144,23 +144,23 @@ export class AtlasMap {
         for (const f of world.features) {
           const p = f.properties;
           if (p.rank > 5 || p.code === "AQ") continue;
+          const zh =
+            p.code?.length === 2
+              ? new Intl.DisplayNames(["zh"], { type: "region" }).of(p.code) ||
+                p.zh
+              : p.zh;
+          const en =
+            p.code?.length === 2
+              ? new Intl.DisplayNames(["en"], { type: "region" }).of(p.code) ||
+                p.name
+              : p.name;
           const label = document.createElement("span");
           label.className = "country-label";
-          label.textContent = this.lang === "zh" ? p.zh : p.name;
+          label.textContent = this.lang === "zh" ? zh : en;
           const marker = new maplibregl.Marker({ element: label })
             .setLngLat([p.lon, p.lat])
             .addTo(this.map!);
-          this.labels.push({
-            marker,
-            zh:
-              p.code?.length === 2
-                ? new Intl.DisplayNames(["zh"], { type: "region" }).of(
-                    p.code,
-                  ) || p.zh
-                : p.zh,
-            en: p.name,
-            rank: p.rank,
-          });
+          this.labels.push({ marker, zh, en, rank: p.rank });
         }
         this.theme(this.dark);
         this.updateLabels();
