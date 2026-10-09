@@ -1,9 +1,7 @@
 import logging
 import os
-from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from atlas.lookup import lookup, manifest
@@ -59,6 +57,6 @@ def health():
     }
 
 
-# Vercel serves public/ directly from the CDN. This mount is local-only.
-if not os.environ.get("VERCEL") and Path("public/index.html").exists():
-    app.mount("/", StaticFiles(directory="public", html=True), name="site")
+# Declare the build output explicitly so Vercel promotes generated assets to its CDN.
+# check_dir=False also permits running API tests before the frontend is built.
+app.frontend("/", directory="public", fallback=None, check_dir=False)

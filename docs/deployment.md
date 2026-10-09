@@ -1,6 +1,6 @@
 # Deploy to Vercel
 
-The project uses the FastAPI framework preset. `pyproject.toml` points to `app:app`; `.python-version` selects Python 3.12 and `uv.lock` pins dependencies. The build runs `npm ci && npm run build` and writes the frontend into root `public/`, which Vercel serves through its CDN.
+The project uses the FastAPI framework preset. `pyproject.toml` points to `app:app`; `.python-version` selects Python 3.12 and `uv.lock` pins dependencies. The build runs `npm ci && npm run build` and writes the frontend into root `public/`. `app.frontend()` explicitly declares that generated directory so Vercel promotes its files to the CDN, even when no local build output was uploaded.
 
 The XDB files and `places.json` are outside `public/` and are included only in the Python Function. Do not move them into frontend assets. `vercel.json` excludes caches, source frontend files, tests and Node modules from the function. No environment secrets are required.
 
