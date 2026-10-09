@@ -25,7 +25,7 @@ test("IPv4 query updates real map, history, language and theme without shipping 
   expect(errors).toEqual([]);
   await expect(page.locator(".place-title")).toHaveCSS(
     "color",
-    "rgb(231, 240, 235)",
+    "rgb(237, 240, 248)",
   );
 });
 
@@ -106,3 +106,39 @@ for (const width of [320, 390, 1440])
       fullPage: true,
     });
   });
+
+test("markers stay anchored after repeated queries and selecting history", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto("/");
+  await expect(page.locator("#map")).toHaveAttribute("data-ready", "true");
+  await page.locator("#ip-input").fill("195.211.97.37");
+  await page.getByRole("button", { name: "查询", exact: true }).click();
+  await expect(page.locator(".coordinate-line")).toContainText("120.36° W");
+  await page.getByRole("button", { name: "南京", exact: false }).click();
+  await expect(page.locator(".place-title")).toHaveText("南京市");
+  const pin = page.locator(".map-pin.selected");
+  await expect(pin).toHaveCSS("position", "absolute");
+  await expect
+    .poll(async () => {
+      const r = await pin.boundingBox();
+      const m = await page.locator("#map").boundingBox();
+      return Math.abs(r!.y + r!.height / 2 - (m!.y + m!.height / 2));
+    })
+    .toBeLessThan(3);
+  await page.locator(".history-item").nth(1).click();
+  await expect(page.locator(".place-title")).toHaveText("Washington");
+  const box = await pin.boundingBox();
+  const panel = await page.locator(".rail").boundingBox();
+  expect(box!.x).toBeGreaterThan(panel!.x + panel!.width);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(async () => {
+      const r = await pin.boundingBox();
+      return r!.x;
+    })
+    .toBeLessThan(300);
+  const mobile = await pin.boundingBox();
+  expect(mobile!.x).toBeGreaterThan(40);
+});

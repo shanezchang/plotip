@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import geonamescache
-from shapely.geometry import mapping, shape
+from shapely.geometry import Point, mapping, shape
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,13 +28,58 @@ def dump(path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
 
 
+def region_index(features):
+    """Canonical admin names outrank translated names and aliases; ties stay unresolved."""
+    candidates = defaultdict(list)
+    for f in features:
+        p = f["properties"]
+        geometry = shape(f["geometry"])
+        largest = (
+            max(geometry.geoms, key=lambda g: g.area)
+            if geometry.geom_type == "MultiPolygon"
+            else geometry
+        )
+        point = (
+            Point(p["longitude"], p["latitude"])
+            if p["longitude"] is not None and p["latitude"] is not None
+            else largest.representative_point()
+        )
+        if not largest.covers(point):
+            point = largest.representative_point()
+        item = {
+            "longitude": point.x,
+            "latitude": point.y,
+            "name": p["name"],
+            "level": "region",
+            "source": "Natural Earth",
+            "region_id": p["adm1_code"],
+            "bounds": list(largest.bounds),
+        }
+        names = [(p.get("name"), 0), (p.get("gn_name"), 0), (p.get("woe_name"), 0)]
+        names += [(p.get(k), 1) for k in ("name_en", "name_zh", "name_local")]
+        names += [(n, 2) for n in (p.get("name_alt") or "").split("|")]
+        for name, rank in names:
+            if name:
+                candidates[(p["iso_a2"], norm(name))].append(
+                    (rank, item, p.get("gn_a1_code"), geometry)
+                )
+    regions, codes, shapes = {}, {}, {}
+    for key, values in candidates.items():
+        best = min(v[0] for v in values)
+        winners = {v[1]["region_id"]: v for v in values if v[0] == best}
+        if len(winners) == 1:
+            _, regions[key], codes[key], shapes[key] = next(iter(winners.values()))
+    return regions, codes, shapes
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip2region", type=Path, required=True)
     args = parser.parse_args()
     country_geo = json.loads((ROOT / ".cache/countries.geojson").read_text())
     province_geo = json.loads((ROOT / ".cache/provinces.geojson").read_text())
-    countries, provinces, province_codes = {}, {}, {}
+    countries = {}
+    provinces, province_codes, province_shapes = region_index(province_geo["features"])
     for f in country_geo["features"]:
         p = f["properties"]
         code = p["ISO_A2_EH"]
@@ -46,31 +91,23 @@ def main():
             "lat": p["LABEL_Y"],
             "rank": p["LABELRANK"],
         }
+        geometry = shape(f["geometry"])
+        largest = (
+            max(geometry.geoms, key=lambda g: g.area)
+            if geometry.geom_type == "MultiPolygon"
+            else geometry
+        )
+        point = Point(p["LABEL_X"], p["LABEL_Y"])
+        if not largest.covers(point):
+            point = largest.representative_point()
         countries[code] = {
-            "longitude": p["LABEL_X"],
-            "latitude": p["LABEL_Y"],
+            "bounds": list(largest.bounds),
+            "longitude": point.x,
+            "latitude": point.y,
             "name": p["NAME_EN"],
             "level": "country",
             "source": "Natural Earth",
         }
-    for f in province_geo["features"]:
-        p = f["properties"]
-        if p["longitude"] is None or p["latitude"] is None:
-            continue
-        item = {
-            "longitude": p["longitude"],
-            "latitude": p["latitude"],
-            "name": p["name_en"] or p["name"],
-            "level": "region",
-            "source": "Natural Earth",
-        }
-        names = [
-            p.get(k) for k in ("name", "name_en", "name_zh", "name_local", "gn_name", "woe_name")
-        ]
-        names += (p.get("name_alt") or "").split("|")
-        for name in filter(None, names):
-            provinces[(p["iso_a2"], norm(name))] = item
-            province_codes[(p["iso_a2"], norm(name))] = p.get("gn_a1_code")
     cities = defaultdict(dict)
     for c in geonamescache.GeonamesCache().get_cities().values():
         for name in {c["name"], *c["alternatenames"]}:
@@ -94,6 +131,13 @@ def main():
             admin = province_codes.get((code, norm(province)))
             if admin:
                 candidates = [c for c in candidates if f"{code}.{c['admin1code']}" == admin]
+            region_shape = province_shapes.get((code, norm(province)))
+            if region_shape is not None:
+                candidates = [
+                    c
+                    for c in candidates
+                    if region_shape.buffer(0.05).covers(Point(c["longitude"], c["latitude"]))
+                ]
             if len(candidates) == 1:
                 c = candidates[0]
                 point = {
@@ -118,8 +162,10 @@ def main():
         outlines["features"].append(
             {
                 "type": "Feature",
-                "properties": {},
-                "geometry": mapping(shape(feature["geometry"]).boundary.simplify(0.04)),
+                "properties": {"id": feature["properties"]["adm1_code"]},
+                "geometry": mapping(
+                    shape(feature["geometry"]).simplify(0.02, preserve_topology=True)
+                ),
             }
         )
     dump(ROOT / "web/public/regions.geojson", outlines)

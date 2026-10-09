@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse
 from atlas.lookup import lookup, manifest
 
 app = FastAPI(
-    title="IP Atlas",
+    title="Plotip",
     version="0.1.0",
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",

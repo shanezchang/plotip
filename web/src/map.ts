@@ -68,16 +68,16 @@ export class AtlasMap {
           {
             id: "water",
             type: "background",
-            paint: { "background-color": "#e5eeeb" },
+            paint: { "background-color": "#e9edf5" },
           },
           {
             id: "grid",
             type: "line",
             source: "grid",
             paint: {
-              "line-color": "#b7cac3",
+              "line-color": "#bdc7db",
               "line-width": 0.6,
-              "line-opacity": 0.45,
+              "line-opacity": 0.25,
               "line-dasharray": [2, 5],
             },
           },
@@ -85,13 +85,13 @@ export class AtlasMap {
             id: "land",
             type: "fill",
             source: "world",
-            paint: { "fill-color": "#fbfcf8" },
+            paint: { "fill-color": "#fbfcff" },
           },
           {
             id: "borders",
             type: "line",
             source: "world",
-            paint: { "line-color": "#b7cac3", "line-width": 0.65 },
+            paint: { "line-color": "#bdc7db", "line-width": 0.65 },
           },
           {
             id: "regions",
@@ -99,7 +99,7 @@ export class AtlasMap {
             source: "regions",
             minzoom: 2.5,
             paint: {
-              "line-color": "#b7cac3",
+              "line-color": "#bdc7db",
               "line-width": 0.65,
               "line-opacity": 0.65,
             },
@@ -109,7 +109,21 @@ export class AtlasMap {
             type: "fill",
             source: "world",
             filter: ["==", ["get", "code"], ""],
-            paint: { "fill-color": "#176657", "fill-opacity": 0.13 },
+            paint: { "fill-color": "#315be8", "fill-opacity": 0.06 },
+          },
+          {
+            id: "selected-region",
+            type: "fill",
+            source: "regions",
+            filter: ["==", ["get", "id"], ""],
+            paint: { "fill-color": "#315be8", "fill-opacity": 0.12 },
+          },
+          {
+            id: "region-outline",
+            type: "line",
+            source: "regions",
+            filter: ["==", ["get", "id"], ""],
+            paint: { "line-color": "#315be8", "line-width": 1.6 },
           },
           {
             id: "selected-outline",
@@ -117,7 +131,7 @@ export class AtlasMap {
             source: "world",
             filter: ["==", ["get", "code"], ""],
             paint: {
-              "line-color": "#176657",
+              "line-color": "#315be8",
               "line-width": 1.1,
               "line-opacity": 0.7,
             },
@@ -139,6 +153,7 @@ export class AtlasMap {
         canvasContextAttributes: { antialias: true },
       });
       this.map.touchZoomRotate.disableRotation();
+      this.map.setPadding(this.padding());
       this.map.on("load", () => {
         this.ready = true;
         for (const f of world.features) {
@@ -170,6 +185,10 @@ export class AtlasMap {
         document.getElementById("map")!.dataset.ready = "true";
       });
       this.map.on("zoom", () => this.updateLabels());
+      this.map.on("resize", () => {
+        if (this.active?.location) this.focus(this.active);
+        else this.map?.setPadding(this.padding());
+      });
       this.map.on("mousemove", (event) => {
         document.getElementById("map-coordinates")!.textContent =
           `${Math.abs(event.lngLat.lat).toFixed(1)}° ${event.lngLat.lat >= 0 ? "N" : "S"}   ${Math.abs(event.lngLat.lng).toFixed(1)}° ${event.lngLat.lng >= 0 ? "E" : "W"}`;
@@ -208,13 +227,15 @@ export class AtlasMap {
     this.dark = dark;
     if (!this.ready || !this.map) return;
     for (const [id, prop, color] of [
-      ["water", "background-color", dark ? "#142b29" : "#e5eeeb"],
-      ["land", "fill-color", dark ? "#29413a" : "#fbfcf8"],
-      ["borders", "line-color", dark ? "#486259" : "#b7cac3"],
-      ["regions", "line-color", dark ? "#486259" : "#b7cac3"],
-      ["grid", "line-color", dark ? "#527369" : "#b7cac3"],
-      ["selected", "fill-color", dark ? "#95c9b7" : "#176657"],
-      ["selected-outline", "line-color", dark ? "#95c9b7" : "#176657"],
+      ["water", "background-color", dark ? "#191e2a" : "#e9edf5"],
+      ["land", "fill-color", dark ? "#2a3245" : "#fbfcff"],
+      ["borders", "line-color", dark ? "#4a5874" : "#bdc7db"],
+      ["regions", "line-color", dark ? "#4a5874" : "#bdc7db"],
+      ["grid", "line-color", dark ? "#4a5874" : "#bdc7db"],
+      ["selected", "fill-color", dark ? "#a4b7ff" : "#315be8"],
+      ["selected-outline", "line-color", dark ? "#a4b7ff" : "#315be8"],
+      ["selected-region", "fill-color", dark ? "#a4b7ff" : "#315be8"],
+      ["region-outline", "line-color", dark ? "#a4b7ff" : "#315be8"],
     ])
       this.map.setPaintProperty(
         id,
@@ -229,25 +250,46 @@ export class AtlasMap {
     if (fly && active?.location && this.ready) this.focus(active);
     else if (fly && active && !active.location) this.overview();
   }
+  private padding() {
+    const desktop = window.innerWidth > 700;
+    const rail = document.querySelector(".rail")!.getBoundingClientRect();
+    return {
+      top: 72,
+      bottom: 72,
+      left: desktop ? Math.ceil(rail.right) + 32 : 40,
+      right: 64,
+    };
+  }
   private focus(r: Result) {
-    if (!r.location) return;
-    this.map?.flyTo({
-      center: [r.location.longitude, r.location.latitude],
-      zoom:
-        r.location.level === "city"
-          ? 4.2
-          : r.location.level === "region"
-            ? 3.1
-            : 2.1,
+    if (!r.location || !this.map) return;
+    const options = {
+      padding: this.padding(),
       duration: matchMedia("(prefers-reduced-motion: reduce)").matches
         ? 0
-        : 650,
-    });
+        : 500,
+    };
+    if (r.location.bounds) {
+      const [w, s, e, n] = r.location.bounds;
+      this.map.fitBounds(
+        [
+          [w, s],
+          [e, n],
+        ],
+        { ...options, absolutePadding: true, maxZoom: 5 },
+      );
+    } else {
+      this.map.flyTo({
+        ...options,
+        center: [r.location.longitude, r.location.latitude],
+        zoom: 4.6,
+      });
+    }
   }
   overview() {
     this.map?.flyTo({
       center: [65, 24],
       zoom: 1.25,
+      padding: this.padding(),
       duration: matchMedia("(prefers-reduced-motion: reduce)").matches
         ? 0
         : 450,
@@ -289,6 +331,12 @@ export class AtlasMap {
           .addTo(this.map),
       );
     }
+    for (const layer of ["selected-region", "region-outline"])
+      this.map.setFilter(layer, [
+        "==",
+        ["get", "id"],
+        this.active?.location?.region_id || "",
+      ]);
     for (const layer of ["selected", "selected-outline"])
       this.map.setFilter(layer, [
         "==",

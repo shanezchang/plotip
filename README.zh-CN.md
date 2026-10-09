@@ -1,10 +1,10 @@
-# IP Atlas
+# 落点 Plotip
 
 每个 IP，都有来处。查询 IP 归属地，在一张安静、直观的地图上探索它的位置。
 
 [在线体验](https://ip-atlas-app.vercel.app/) · [English](README.md) · [数据与署名](THIRD_PARTY_NOTICES.md) · [开发说明](docs/development.md)
 
-![IP Atlas](docs/preview.png)
+![Plotip](docs/preview.png)
 
 支持 IPv4 / IPv6、国家 / 地区 / 城市 / 运营商查询、地图定位、会话历史、复制结果、中英文、明暗主题。
 

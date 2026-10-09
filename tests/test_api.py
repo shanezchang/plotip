@@ -87,3 +87,42 @@ def test_vercel_missing_paths_without_frontend_bundle(monkeypatch, tmp_path):
     for path in ["/data/ip2region_v4.xdb", "/data/places.json", "/.env.local", "/missing"]:
         assert deployed.get(path).status_code == 404
     assert deployed.get("/api/health").status_code == 200
+
+
+def test_washington_state_is_not_the_district_of_columbia():
+    point = lookup("195.211.97.37")["location"]
+    assert point["level"] == "region"
+    assert -125 < point["longitude"] < -116
+    assert 45 < point["latitude"] < 50
+    west, south, east, north = point["bounds"]
+    assert west < point["longitude"] < east
+    assert south < point["latitude"] < north
+
+
+def test_region_names_prefer_canonical_names_and_reject_equal_aliases():
+    from scripts.prepare_data import region_index
+
+    def feature(name, alias, identifier):
+        return {
+            "properties": {
+                "name": name,
+                "name_en": alias,
+                "iso_a2": "US",
+                "adm1_code": identifier,
+                "longitude": 0.5,
+                "latitude": 0.5,
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
+            },
+        }
+
+    state = feature("Washington", "Shared", "state")
+    district = feature("District of Columbia", "Washington", "district")
+    other = feature("Other", "Shared", "other")
+    for features in ([state, district, other], [other, district, state]):
+        regions, _, _ = region_index(features)
+        assert regions[("US", "washington")]["region_id"] == "state"
+        assert regions[("US", "districtofcolumbia")]["region_id"] == "district"
+        assert ("US", "shared") not in regions

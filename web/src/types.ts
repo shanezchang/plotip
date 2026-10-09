@@ -5,6 +5,8 @@ export type Place = {
   name: string;
   source: string;
   timezone?: string;
+  region_id?: string;
+  bounds?: [number, number, number, number];
 };
 export type Result = {
   ip: string;

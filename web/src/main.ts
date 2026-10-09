@@ -80,16 +80,16 @@ let busy = false;
 let copyTimer: ReturnType<typeof setTimeout> | undefined;
 const text = {
   zh: {
-    tagline: "每个 IP，都有来处。",
-    intro: "从一串数字，找到它在世界的位置。",
+    tagline: "这个 IP，来自哪里？",
+    intro: "",
     label: "IP 地址",
     placeholder: "输入 IPv4 或 IPv6 地址",
     search: "查询",
     my: "查询我的 IP",
     try: "试试看",
     examples: ["南京", "加利福尼亚", "深圳 · IPv6"],
-    emptyTitle: "世界很大，从一个 IP 开始。",
-    emptyBody: "查询国家、地区与运营商，在地图上看看它的来处。",
+    emptyTitle: "把地址放回地图。",
+    emptyBody: "输入 IP，或从上面的示例开始。",
     recent: "本次查询",
     clear: "清空",
     emptyRecent: "查询过的地址会留在这里。",
@@ -123,10 +123,10 @@ const text = {
     regionBadge: "省 / 州参考位置",
     countryBadge: "国家 / 地区参考位置",
     about: "关于与数据来源",
-    aboutTitle: "关于 IP Atlas",
+    aboutTitle: "关于 Plotip",
     aboutLead: "让一串 IP 地址，在地图上有迹可循。",
     aboutBody:
-      "IP Atlas 是一个开源的 IP 归属地查询工具。查询在服务端完成；本次查询历史只保存在当前浏览器标签页中，关闭标签页后清除。无需注册，也不会下载 IP 数据库到浏览器。",
+      "Plotip 是一个开源的 IP 归属地查询工具。查询在服务端完成；本次查询历史只保存在当前浏览器标签页中，关闭标签页后清除。无需注册，也不会下载 IP 数据库到浏览器。",
     accuracy:
       "IP 归属地不等于设备位置。代理、VPN、网络出口和数据更新延迟都会影响结果；地图显示的是匹配地域的参考坐标。",
     sources: "数据来源",
@@ -140,7 +140,7 @@ const text = {
     result: "查询结果",
   },
   en: {
-    tagline: "Every IP has a place.",
+    tagline: "Where does this IP live?",
     intro: "Find where an address meets the world.",
     label: "IP address",
     placeholder: "Enter an IPv4 or IPv6 address",
@@ -188,10 +188,10 @@ const text = {
     regionBadge: "Region reference point",
     countryBadge: "Country reference point",
     about: "About & data sources",
-    aboutTitle: "About IP Atlas",
+    aboutTitle: "About Plotip",
     aboutLead: "Put an IP address in perspective.",
     aboutBody:
-      "IP Atlas is an open-source IP geolocation tool. Lookups run on the server. History stays in your current browser tab and is cleared when the tab closes. No account or IP database download is needed.",
+      "Plotip is an open-source IP geolocation tool. Lookups run on the server. History stays in your current browser tab and is cleared when the tab closes. No account or IP database download is needed.",
     accuracy:
       "IP geolocation is not device positioning. Proxies, VPNs, network gateways and aging records can affect results. Map coordinates represent the matched region.",
     sources: "Data sources",
@@ -212,7 +212,7 @@ const sampleIPs = [
   "240e:3b7:3272:d8d0:db09:c067:8d59:539e",
 ];
 try {
-  const data = JSON.parse(sessionStorage.getItem("atlas-history") || "[]");
+  const data = JSON.parse(sessionStorage.getItem("plotip-history-v2") || "[]");
   if (Array.isArray(data))
     history = data
       .filter(
@@ -229,8 +229,8 @@ try {
 
 $("app").innerHTML = `
 <a class="skip-link" href="#ip-input">${lang === "zh" ? "跳到查询" : "Skip to lookup"}</a>
-<header class="masthead"><a class="brand" href="/" aria-label="IP Atlas"><img src="/favicon.svg" width="32" height="32" alt=""/><span>IP Atlas<span class="brand-dot">.</span></span></a><span class="masthead-caption" id="header-caption"></span><nav aria-label="Site controls"><button id="lang" class="text-button">EN</button><button id="theme" class="icon-button"></button><a class="github-link" href="https://github.com/shanezchang/ip-atlas" target="_blank" rel="noopener noreferrer">${icon("Github")}<span>GitHub</span>${icon("ArrowUpRight")}</a></nav></header>
-<main class="workspace"><aside class="rail"><section class="query-section"><h1 id="tagline"></h1><p id="intro" class="intro"></p><form id="query-form" novalidate><label for="ip-input" id="input-label"></label><div class="input-wrap">${icon("Search")}<input id="ip-input" name="ip" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" aria-describedby="error" required/><kbd>/</kbd></div><div class="query-actions"><button type="submit" id="submit" class="primary"></button><button type="button" id="my-ip" class="secondary"></button></div><p id="error" class="error" role="alert" hidden></p><p id="status" class="sr-only" role="status"></p></form><div class="examples"><span id="try-label"></span><div id="examples"></div></div></section><section id="result" class="result-section" aria-live="polite" aria-atomic="true"></section><section class="history-section"><div class="section-heading"><h2 id="recent-label"></h2><button id="clear-history" class="text-button"></button></div><div id="history"></div><p class="history-note" id="local-note"></p></section><footer class="rail-footer"><button id="about-button" class="text-button"></button><span>by <a href="https://github.com/shanezchang" target="_blank" rel="noopener noreferrer">Shane</a></span></footer></aside><section class="map-panel" aria-label="Interactive world map"><div id="map"></div><div class="map-heading"><span class="map-heading-dot"></span><span id="world-label"></span></div><div id="map-loading" role="status"></div><div class="map-controls"><button id="reset-map" class="icon-button">${icon("Globe2")}</button><div class="zoom-controls"><button id="zoom-in" class="icon-button">${icon("Plus")}</button><button id="zoom-out" class="icon-button">${icon("Minus")}</button></div></div><div class="map-footer"><span id="map-coordinates">30° N &nbsp; 60° E</span><span id="map-note"></span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div></section></main>
+<header class="masthead"><a class="brand" href="/" aria-label="Plotip"><img src="/favicon.svg" width="32" height="32" alt=""/><span class="brand-word">plotip</span><span class="brand-chinese">落点</span></a><span class="masthead-caption" id="header-caption"></span><nav aria-label="Site controls"><button id="lang" class="text-button">EN</button><button id="theme" class="icon-button"></button><a class="github-link" href="https://github.com/shanezchang/ip-atlas" target="_blank" rel="noopener noreferrer">${icon("Github")}<span>GitHub</span>${icon("ArrowUpRight")}</a></nav></header>
+<main class="workspace"><aside class="rail"><section class="query-section"><h1 id="tagline"></h1><p id="intro" class="intro"></p><form id="query-form" novalidate><label for="ip-input" id="input-label"></label><div class="input-wrap"><input id="ip-input" name="ip" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" aria-describedby="error" required/><kbd>/</kbd></div><div class="query-actions"><button type="submit" id="submit" class="primary"></button><button type="button" id="my-ip" class="secondary"></button></div><p id="error" class="error" role="alert" hidden></p><p id="status" class="sr-only" role="status"></p></form><div class="examples"><span id="try-label"></span><div id="examples"></div></div></section><section id="result" class="result-section" aria-live="polite" aria-atomic="true"></section><section class="history-section"><div class="section-heading"><h2 id="recent-label"></h2><button id="clear-history" class="text-button"></button></div><div id="history"></div><p class="history-note" id="local-note"></p></section><footer class="rail-footer"><button id="about-button" class="text-button"></button><span>by <a href="https://github.com/shanezchang" target="_blank" rel="noopener noreferrer">Shane</a></span></footer></aside><section class="map-panel" aria-label="Interactive world map"><div id="map"></div><div class="map-heading"><span class="map-heading-dot"></span><span id="world-label"></span></div><div id="map-loading" role="status"></div><div class="map-controls"><button id="reset-map" class="icon-button">${icon("Globe2")}</button><div class="zoom-controls"><button id="zoom-in" class="icon-button">${icon("Plus")}</button><button id="zoom-out" class="icon-button">${icon("Minus")}</button></div></div><div class="map-footer"><span id="map-coordinates">30° N &nbsp; 60° E</span><span id="map-note"></span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div></section></main>
 <dialog id="about-dialog" aria-labelledby="about-title"><button id="close-dialog" class="icon-button dialog-close">${icon("X")}</button><div id="about-content"></div></dialog><div id="toast" role="status" hidden></div>`;
 
 let atlas: AtlasMap | undefined;
@@ -239,12 +239,8 @@ function placeTitle(r: Result): string {
   return r.city || r.region || r.country || t().unmappedTitle;
 }
 function fields(r: Result) {
-  return [
-    [t().country, r.country],
-    [t().region, r.region],
-    [t().city, r.city],
-    [t().isp, r.isp],
-  ]
+  return [[t().isp, r.isp]]
+    .filter(([, value]) => Boolean(value))
     .map(
       ([label, value]) =>
         `<div class="detail-row"><dt>${esc(label)}</dt><dd class="${value ? "" : "unavailable"}">${esc(value || t().unknown)}</dd></div>`,
@@ -254,7 +250,7 @@ function fields(r: Result) {
 function renderResult() {
   if (!active) {
     $("result").innerHTML =
-      `<div class="empty-orbit" aria-hidden="true">${icon("Globe2")}</div><h2>${t().emptyTitle}</h2><p>${t().emptyBody}</p>`;
+      `<div class="empty-orbit" aria-hidden="true"><img src="/favicon.svg" alt="" width="44" height="44"/></div><h2>${t().emptyTitle}</h2><p>${t().emptyBody}</p>`;
     $("result").classList.add("empty");
     return;
   }
@@ -311,7 +307,7 @@ function select(r: Result) {
 }
 function saveHistory() {
   try {
-    sessionStorage.setItem("atlas-history", JSON.stringify(history));
+    sessionStorage.setItem("plotip-history-v2", JSON.stringify(history));
   } catch {
     /* Storage is optional. */
   }
@@ -390,8 +386,8 @@ function renderLanguage() {
   document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   document.title =
     lang === "zh"
-      ? "IP Atlas — IP 归属地查询"
-      : "IP Atlas — Find an IP on the map";
+      ? "落点 Plotip — IP 归属地查询"
+      : "Plotip — Find an IP on the map";
   for (const [id, key] of Object.entries({
     tagline: "tagline",
     intro: "intro",

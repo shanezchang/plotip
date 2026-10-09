@@ -1,10 +1,10 @@
-# IP Atlas
+# Plotip
 
 Every IP has a place. Look up an address and explore its region on a quiet, interactive map.
 
 [Live website](https://ip-atlas-app.vercel.app/) · [中文](README.zh-CN.md) · [Data & attribution](THIRD_PARTY_NOTICES.md) · [Development](docs/development.md)
 
-![IP Atlas](docs/preview.png)
+![Plotip](docs/preview.png)
 
 - IPv4 and IPv6 lookup, with country, region, city and network details.
 - A self-hosted world map with regional boundaries. No map API key.
@@ -55,4 +55,4 @@ npm run test:e2e
 
 ## License
 
-Application: MIT. Geographic datasets and dependencies retain their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md). IP Atlas is an independent project built with ip2region, not its official website or commercial data service.
+Application: MIT. Geographic datasets and dependencies retain their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md). Plotip is an independent project built with ip2region, not its official website or commercial data service.
