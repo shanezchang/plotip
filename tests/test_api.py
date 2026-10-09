@@ -84,7 +84,13 @@ def test_vercel_missing_paths_without_frontend_bundle(monkeypatch, tmp_path):
     monkeypatch.setenv("VERCEL", "1")
     monkeypatch.chdir(tmp_path)
     deployed = TestClient(runpy.run_path(str(source))["app"])
-    for path in ["/data/ip2region_v4.xdb", "/data/places.json", "/.env.local", "/missing"]:
+    for path in [
+        "/data/ip2region_v4.xdb",
+        "/data/places.json",
+        "/data/ranges.sqlite",
+        "/.env.local",
+        "/missing",
+    ]:
         assert deployed.get(path).status_code == 404
     assert deployed.get("/api/health").status_code == 200
 
@@ -182,7 +188,6 @@ def test_reverse_area_catalog_empty_results_and_bad_requests():
     assert client.get("/api/ranges?area=region:nonexistent").status_code == 404
     assert client.get("/api/areas?country=ZZ").status_code == 404
     assert client.get("/api/ranges?area=country:US&after=9223372036854775807").json()["items"] == []
-    assert client.get("/data/ranges.sqlite").status_code == 404
 
 
 def test_reverse_index_is_readonly_and_queries_use_an_index():
