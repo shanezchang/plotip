@@ -8,3 +8,5 @@ __pycache__
 playwright-report
 test-results
 .env*
+
+/public
