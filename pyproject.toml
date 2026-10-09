@@ -1,0 +1,24 @@
+[project]
+name = "ip-atlas"
+version = "0.1.0"
+description = "A quiet atlas for IP addresses."
+requires-python = ">=3.12,<3.13"
+dependencies = ["fastapi>=0.115", "uvicorn>=0.30", "py-ip2region==3.0.4"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.28",
+    "ruff>=0.12",
+    "geonamescache==3.0.2",
+    "shapely>=2.2.0",
+]
+
+[tool.vercel]
+entrypoint = "app:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
