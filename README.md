@@ -2,7 +2,7 @@
 
 Every IP has a place. Look up an address and explore its region on a quiet, interactive map.
 
-[Live website](https://ip-atlas-app.vercel.app/) · [中文](README.zh-CN.md) · [Data & attribution](THIRD_PARTY_NOTICES.md) · [Development](docs/development.md)
+[Live website](https://plotip.vercel.app/) · [中文](README.zh-CN.md) · [Data & attribution](THIRD_PARTY_NOTICES.md) · [Development](docs/development.md)
 
 ![Plotip](docs/preview.png)
 
@@ -19,8 +19,8 @@ No account, application database, external lookup API or analytics script.
 Requires [uv](https://docs.astral.sh/uv/) and Node.js 22+.
 
 ```sh
-git clone https://github.com/shanezchang/ip-atlas.git
-cd ip-atlas
+git clone https://github.com/shanezchang/plotip.git
+cd plotip
 uv sync --locked
 npm ci
 npm run build

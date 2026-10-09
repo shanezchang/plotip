@@ -1,5 +1,5 @@
 [project]
-name = "ip-atlas"
+name = "plotip"
 version = "0.1.0"
 description = "A quiet atlas for IP addresses."
 requires-python = ">=3.12,<3.13"

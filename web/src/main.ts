@@ -69,7 +69,8 @@ const persist = (key: string, value: string) => {
     /* Storage is optional. */
   }
 };
-let lang: Lang = stored("atlas-lang") === "en" ? "en" : "zh";
+let lang: Lang =
+  (stored("plotip-lang") ?? stored("atlas-lang")) === "zh" ? "zh" : "en";
 let dark = stored("atlas-theme")
   ? stored("atlas-theme") === "dark"
   : matchMedia("(prefers-color-scheme: dark)").matches;
@@ -141,7 +142,7 @@ const text = {
   },
   en: {
     tagline: "Where does this IP live?",
-    intro: "Find where an address meets the world.",
+    intro: "",
     label: "IP address",
     placeholder: "Enter an IPv4 or IPv6 address",
     search: "Look up",
@@ -229,7 +230,7 @@ try {
 
 $("app").innerHTML = `
 <a class="skip-link" href="#ip-input">${lang === "zh" ? "跳到查询" : "Skip to lookup"}</a>
-<header class="masthead"><a class="brand" href="/" aria-label="Plotip"><img src="/favicon.svg" width="32" height="32" alt=""/><span class="brand-word">plotip</span><span class="brand-chinese">落点</span></a><span class="masthead-caption" id="header-caption"></span><nav aria-label="Site controls"><button id="lang" class="text-button">EN</button><button id="theme" class="icon-button"></button><a class="github-link" href="https://github.com/shanezchang/ip-atlas" target="_blank" rel="noopener noreferrer">${icon("Github")}<span>GitHub</span>${icon("ArrowUpRight")}</a></nav></header>
+<header class="masthead"><a class="brand" href="/" aria-label="Plotip"><img src="/favicon.svg" width="32" height="32" alt=""/><span class="brand-word">plotip</span><span class="brand-chinese">落点</span></a><span class="masthead-caption" id="header-caption"></span><nav aria-label="Site controls"><button id="lang" class="text-button">EN</button><button id="theme" class="icon-button"></button><a class="github-link" href="https://github.com/shanezchang/plotip" target="_blank" rel="noopener noreferrer">${icon("Github")}<span>GitHub</span>${icon("ArrowUpRight")}</a></nav></header>
 <main class="workspace"><aside class="rail"><section class="query-section"><h1 id="tagline"></h1><p id="intro" class="intro"></p><form id="query-form" novalidate><label for="ip-input" id="input-label"></label><div class="input-wrap"><input id="ip-input" name="ip" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" aria-describedby="error" required/><kbd>/</kbd></div><div class="query-actions"><button type="submit" id="submit" class="primary"></button><button type="button" id="my-ip" class="secondary"></button></div><p id="error" class="error" role="alert" hidden></p><p id="status" class="sr-only" role="status"></p></form><div class="examples"><span id="try-label"></span><div id="examples"></div></div></section><section id="result" class="result-section" aria-live="polite" aria-atomic="true"></section><section class="history-section"><div class="section-heading"><h2 id="recent-label"></h2><button id="clear-history" class="text-button"></button></div><div id="history"></div><p class="history-note" id="local-note"></p></section><footer class="rail-footer"><button id="about-button" class="text-button"></button><span>by <a href="https://github.com/shanezchang" target="_blank" rel="noopener noreferrer">Shane</a></span></footer></aside><section class="map-panel" aria-label="Interactive world map"><div id="map"></div><div class="map-heading"><span class="map-heading-dot"></span><span id="world-label"></span></div><div id="map-loading" role="status"></div><div class="map-controls"><button id="reset-map" class="icon-button">${icon("Globe2")}</button><div class="zoom-controls"><button id="zoom-in" class="icon-button">${icon("Plus")}</button><button id="zoom-out" class="icon-button">${icon("Minus")}</button></div></div><div class="map-footer"><span id="map-coordinates">30° N &nbsp; 60° E</span><span id="map-note"></span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div></section></main>
 <dialog id="about-dialog" aria-labelledby="about-title"><button id="close-dialog" class="icon-button dialog-close">${icon("X")}</button><div id="about-content"></div></dialog><div id="toast" role="status" hidden></div>`;
 
@@ -384,6 +385,7 @@ function showError(message: string) {
 }
 function renderLanguage() {
   document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.querySelector<HTMLElement>(".brand-chinese")!.hidden = lang !== "zh";
   document.title =
     lang === "zh"
       ? "落点 Plotip — IP 归属地查询"
@@ -438,7 +440,7 @@ function renderLanguage() {
   }
   if (!$("map-loading").hidden) $("map-loading").textContent = t().loadingMap;
   $("about-content").innerHTML =
-    `<img src="/favicon.svg" width="40" height="40" alt=""/><h2 id="about-title">${t().aboutTitle}</h2><p class="dialog-lead">${t().aboutLead}</p><p>${t().aboutBody}</p><p>${t().accuracy}</p><h3>${t().sources}</h3><p>${t().data}</p><div class="source-links"><a href="https://github.com/lionsoul2014/ip2region" target="_blank" rel="noopener noreferrer">ip2region</a><a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div><p class="privacy-note">${t().privacy}</p><a href="https://github.com/shanezchang/ip-atlas" target="_blank" rel="noopener noreferrer">GitHub ${icon("ArrowUpRight")}</a>`;
+    `<img src="/favicon.svg" width="40" height="40" alt=""/><h2 id="about-title">${t().aboutTitle}</h2><p class="dialog-lead">${t().aboutLead}</p><p>${t().aboutBody}</p><p>${t().accuracy}</p><h3>${t().sources}</h3><p>${t().data}</p><div class="source-links"><a href="https://github.com/lionsoul2014/ip2region" target="_blank" rel="noopener noreferrer">ip2region</a><a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div><p class="privacy-note">${t().privacy}</p><a href="https://github.com/shanezchang/plotip" target="_blank" rel="noopener noreferrer">GitHub ${icon("ArrowUpRight")}</a>`;
   setBusy(busy);
   renderResult();
   renderHistory();
@@ -461,7 +463,7 @@ $("theme").onclick = () => {
 };
 $("lang").onclick = () => {
   lang = lang === "zh" ? "en" : "zh";
-  persist("atlas-lang", lang);
+  persist("plotip-lang", lang);
   $("error").hidden = true;
   renderLanguage();
 };

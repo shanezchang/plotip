@@ -1,5 +1,13 @@
 import { test, expect } from "@playwright/test";
 
+// Exercise Chinese workflows explicitly; first-visit English is tested separately.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("plotip-lang"))
+      localStorage.setItem("plotip-lang", "zh");
+  });
+});
+
 test("IPv4 query updates real map, history, language and theme without shipping XDB", async ({
   page,
 }) => {

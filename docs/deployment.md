@@ -18,7 +18,6 @@ A first deployment may receive the production alias automatically. Test it immed
 
 ## This deployment
 
-- Website: https://ip-atlas-app.vercel.app/
-- GitHub: https://github.com/shanezchang/ip-atlas
-- Vercel project: `ip-atlas`, scope `shanes-projects-025e82ba`.
-- The shorter `ip-atlas.vercel.app` and `ipatlas.vercel.app` are owned by others. Do not change those domains.
+- Website: https://plotip.vercel.app/
+- GitHub: https://github.com/shanezchang/plotip
+- Vercel project: `plotip`, scope `shanes-projects-025e82ba`.

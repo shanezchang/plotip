@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Sitemap: https://ip-atlas-app.vercel.app/sitemap.xml
+Sitemap: https://plotip.vercel.app/sitemap.xml
