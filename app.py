@@ -3,6 +3,7 @@ import os
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
+from starlette.responses import JSONResponse
 
 from atlas.lookup import lookup, manifest
 
@@ -57,13 +58,13 @@ def health():
     }
 
 
-# Vercel serves the declared frontend from its CDN, outside the Python bundle.
-# Requests that reach the function after API matching must be genuine 404s.
-if os.environ.get("VERCEL"):
-
-    @app.api_route("/{path:path}", methods=["GET", "HEAD"])
-    def missing_path(path: str):
-        raise HTTPException(status_code=404, detail="Not Found")
+# Vercel promotes frontend files to its CDN and omits that directory from
+# the Python bundle. A CDN miss must return 404, not a static-directory error.
+@app.exception_handler(RuntimeError)
+async def missing_frontend(request: Request, exc: RuntimeError):
+    if os.environ.get("VERCEL") and str(exc) == "StaticFiles directory 'public' does not exist.":
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    raise exc
 
 
 # Declare the build output explicitly so Vercel promotes generated assets to its CDN.
