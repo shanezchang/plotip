@@ -74,3 +74,16 @@ def test_concurrent_queries_remain_independent():
     with ThreadPoolExecutor(max_workers=12) as pool:
         results = list(pool.map(lookup, ips))
     assert all(result["ip"] == ip for result, ip in zip(results, ips))
+
+
+def test_vercel_missing_paths_without_frontend_bundle(monkeypatch, tmp_path):
+    import runpy
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[1] / "app.py"
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.chdir(tmp_path)
+    deployed = TestClient(runpy.run_path(str(source))["app"])
+    for path in ["/data/ip2region_v4.xdb", "/data/places.json", "/.env.local", "/missing"]:
+        assert deployed.get(path).status_code == 404
+    assert deployed.get("/api/health").status_code == 200

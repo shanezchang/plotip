@@ -57,6 +57,15 @@ def health():
     }
 
 
+# Vercel serves the declared frontend from its CDN, outside the Python bundle.
+# Requests that reach the function after API matching must be genuine 404s.
+if os.environ.get("VERCEL"):
+
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"])
+    def missing_path(path: str):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+
 # Declare the build output explicitly so Vercel promotes generated assets to its CDN.
 # check_dir=False also permits running API tests before the frontend is built.
 app.frontend("/", directory="public", fallback=None, check_dir=False)
