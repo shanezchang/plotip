@@ -13,7 +13,7 @@ Every IP has a place. Look up an address and explore its region on a quiet, inte
 - Session-only history, copy results, English / Chinese, light / dark themes.
 - Server-side offline lookup. The browser receives results, never the XDB database.
 
-No account, external database service, paid lookup API or analytics script. Reverse lookup uses a bundled, read-only SQLite index.
+No account, external database service, paid lookup API. Reverse lookup uses a bundled, read-only SQLite index.
 
 ## Run locally
 
@@ -61,6 +61,10 @@ npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+## Website analytics
+
+The production website uses cookie-free Vercel Web Analytics for aggregate traffic. DNT/GPC disable collection; URL queries and fragments are stripped. Queried IP addresses and results are not analytics events. Local development and other hostnames stay untracked. See [analytics and search operations](docs/analytics.md).
 
 ## License
 

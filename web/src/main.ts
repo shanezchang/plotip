@@ -2,6 +2,7 @@ import "@fontsource-variable/manrope";
 import "@fontsource/ibm-plex-mono/400.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
+import "./analytics";
 import {
   createElement,
   Search,
@@ -136,7 +137,7 @@ const text = {
     sources: "数据来源",
     data: "IP 数据：ip2region 开源数据库。坐标：GeoNames（CC BY 4.0）与 Natural Earth（公有领域）。底图：Natural Earth，边界沿用其数据表达。",
     privacy:
-      "请求会经过 Vercel 托管服务，平台可能保留基础访问日志。本站不添加分析追踪脚本；查询内容不写入网址。",
+      "本站使用无 Cookie 的 Vercel Web Analytics 统计访问量、来源和设备，尊重 DNT/GPC 设置。查询的 IP 和结果不作为统计事件发送；平台可能保留基础访问日志。",
     close: "关闭",
     theme: "切换明暗主题",
     openSource: "开源代码",
@@ -201,7 +202,7 @@ const text = {
     sources: "Data sources",
     data: "IP data: ip2region open-source database. Coordinates: GeoNames (CC BY 4.0) and Natural Earth (public domain). Basemap: Natural Earth; boundaries follow its dataset.",
     privacy:
-      "Requests pass through Vercel hosting, which may retain basic access logs. This site adds no analytics tracking scripts and does not put queries in the URL.",
+      "Vercel Web Analytics measures visits, referrers and devices without cookies and respects DNT/GPC. Queried IPs and results are not sent as analytics events. Hosting may retain basic access logs.",
     close: "Close",
     theme: "Toggle color theme",
     openSource: "Source code",
