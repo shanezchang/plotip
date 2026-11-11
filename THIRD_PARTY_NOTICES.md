@@ -7,6 +7,6 @@ Plotip application code is MIT-licensed. Third-party software and datasets keep 
 - **Map, region and country reference coordinates:** [Natural Earth](https://www.naturalearthdata.com/about/terms-of-use/), public domain. Original country geometry and simplified administrative outlines; unused properties removed. Snapshot `ca96624a56bd078437bca8184e78163e5039ad19` from `nvkelso/natural-earth-vector`. Geographic names and boundaries follow upstream data.
 - **Map renderer:** MapLibre GL JS, BSD-3-Clause. License in `web/public/licenses/MAPLIBRE-LICENSE.txt`.
 - **Interface icons:** Lucide, ISC (some inherited icons under MIT). License in `web/public/licenses/LUCIDE-LICENSE.txt`.
-- **Manrope and IBM Plex Mono fonts:** SIL Open Font License 1.1. License files in `web/public/licenses/`. Font files are served locally, not from a font CDN.
+- **Maple Mono v7.9 fonts:** Copyright 2022 The Maple Mono Project Authors, SIL Open Font License 1.1. Latin variable WOFF2 is unmodified; CN upright 400/500/600/700 are subsets of the official unhinted TTFs. Source URLs, SHA-256, coverage and license are in `web/public/fonts/README.md`, `manifest.json` and `OFL-Maple.txt`. Fonts are self-hosted. No Reserved Font Name is specified.
 
 The website's About dialog attributes all geographic data sources. Distributed front-end dependency notices are also retained by the bundler.

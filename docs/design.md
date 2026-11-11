@@ -4,13 +4,13 @@ An Explore / Inspect tool. Plot + IP: put an address on the map. The Chinese nam
 
 ## Identity
 
-The original SVG mark combines a three-panel folded map with a white location pin. Three flat blues describe the folds; the negative-space pin stays legible at favicon size. The lowercase Manrope wordmark is compact, with a quiet Chinese companion. Source: `web/public/plotip-mark.svg`; favicon uses the same geometry. No external logo assets.
+The original SVG mark combines a three-panel folded map with a white location pin. Three flat blues describe the folds; the negative-space pin stays legible at favicon size. The lowercase Maple Mono wordmark is compact, with a quiet Chinese companion. Source: `web/public/plotip-mark.svg`; favicon uses the same geometry. No external logo assets.
 
 ## Visual system
 
 Paper #f8f9fb; surface #ffffff; ink #252938; secondary text #606676; blue #315be8; water #e9edf5. Dark surfaces #1c202b / #272c3a; ink #edf0f8; accent #a4b7ff. No gradients or glass.
 
-Manrope for interface/wordmark, PingFang SC for Chinese, IBM Plex Mono for IP addresses and coordinates. Keep the brand distinctive and the controls quiet. Result title and context carry geography once; only additional ISP information gets a detail row.
+Maple Mono v7.9 for interface, wordmark, IP addresses, coordinates and DOM map labels; Maple Mono CN 400/500/600/700 for supported Chinese. Semantic `--font-ui` and `--font-mono` tokens share one stack, with system CJK/monospace fallbacks for unfamiliar place names. Latin is variable (100–800); the UI uses 400/500/600/700, zero negative tracking and real CN weights. Font sources, coverage and regeneration are in `web/public/fonts/README.md`. Keep the brand distinctive and the controls quiet. Result title and context carry geography once; only additional ISP information gets a detail row.
 
 Desktop: a 76px header, a full-width map and a 344px floating query panel. Mobile: query, concise result, map, history. Reference: Apple Maps' persistent map workspace; Primer's keyboard focus and readable controls. Do not copy their identity.
 

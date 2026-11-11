@@ -65,6 +65,10 @@ npx --no-install playwright install chromium
 npm run test:e2e
 ```
 
+## Contact and typography
+
+The English and Chinese **About & data sources** dialog links to the shared assistant inbox [shanechang@agentmail.to](mailto:shanechang@agentmail.to); GitHub feedback and data attribution remain available. The UI, numeric fields and map labels use self-hosted Maple Mono / Maple Mono CN. See [font sources and regeneration](web/public/fonts/README.md).
+
 ## Website analytics
 
 The production website uses cookie-free Vercel Web Analytics for aggregate traffic. DNT/GPC disable collection; URL queries and fragments are stripped. Queried IP addresses and results are not analytics events. Local development and other hostnames stay untracked. See [analytics and search operations](docs/analytics.md).
