@@ -14,7 +14,7 @@ export const test = base.extend({
         request.method() === "GET" &&
         (url.pathname === "/" ||
           /^\/api\/(health|areas|ranges|me)$/.test(url.pathname) ||
-          /^\/(assets\/[^?]+\.(js|css|woff2?|svg)|world\.geojson|regions\.geojson|favicon\.svg|plotip-mark\.svg)$/.test(
+          /^\/(assets\/[^?]+\.(js|css|woff2?|svg)|fonts\/[^?]+\.woff2|world\.geojson|regions\.geojson|favicon\.svg|plotip-mark\.svg)$/.test(
             url.pathname,
           ));
       const lookup =

@@ -28,3 +28,9 @@ For rollback, retain the previous production deployment ID and restore its alias
 - Website: https://plotip.vercel.app/
 - GitHub: https://github.com/shanezchang/plotip
 - Vercel project: `plotip`, scope `shanes-projects-025e82ba`.
+
+## Contact and font releases
+
+Public contact lives in the localized About dialog: `shanechang@agentmail.to`. Do not replace Git author or license identities. Maple sources, license and SHA-256 manifest are in `web/public/fonts/`; regenerate only from the verified original CN faces with `scripts/subset_maple.py`. Deploy committed WOFF2 assets with the normal build.
+
+For typography changes, validate English/Chinese, both themes, 320/390px and desktop, text enlargement, font delay/failure and actual CDP rendered fonts with local fonts disabled. Allow `/fonts/*.woff2` in the read-only browser QA fixture; collector writes remain blocked. Keep `document.fonts.ready` label measurement and the existing `check` gate. Record exact source SHA, the production alias deployment, effective settings and prior rollback ID in ignored `.cache/` evidence. No application/data migration is needed for this contact/font change.

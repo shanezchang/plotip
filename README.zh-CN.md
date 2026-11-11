@@ -48,3 +48,7 @@ Python 3.12 + uv + FastAPI，Vite + TypeScript + MapLibre GL JS。一个 Vercel 
 结果仅代表数据库记录的地区归属，不代表在线设备、IP 所有权或所点击位置的具体设备。暂不提供城市边界选区。省州名称无法可靠匹配的记录仅计入国家；不把不明范围硬分配给某个省州。CIDR 精确覆盖原始地址段。
 
 反向索引是随应用部署的只读 SQLite 文件，不需要额外数据库服务，也不会完整下发给浏览器。
+
+## 联系与字体
+
+中英「关于与数据来源」对话框提供共享助理邮箱 [shanechang@agentmail.to](mailto:shanechang@agentmail.to)，同时保留 GitHub 反馈与数据来源。界面、数字和地图标签统一使用自托管 Maple Mono / Maple Mono CN；来源、许可与子集再生成见 [字体说明](web/public/fonts/README.md)。

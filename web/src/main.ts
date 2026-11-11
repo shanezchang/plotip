@@ -1,5 +1,4 @@
-import "@fontsource-variable/manrope";
-import "@fontsource/ibm-plex-mono/400.css";
+import "./fonts.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import "./analytics";
@@ -135,6 +134,7 @@ const text = {
       "Plotip 是一个开源的 IP 归属地查询工具。查询在服务端完成；本次查询历史只保存在当前浏览器标签页中，关闭标签页后清除。无需注册，也不会下载 IP 数据库到浏览器。",
     accuracy:
       "IP 归属地不等于设备位置。代理、VPN、网络出口和数据更新延迟都会影响结果；地图显示的是匹配地域的参考坐标。",
+    contact: "联系",
     sources: "数据来源",
     data: "IP 数据：ip2region 开源数据库。坐标：GeoNames（CC BY 4.0）与 Natural Earth（公有领域）。底图：Natural Earth，边界沿用其数据表达。",
     privacy:
@@ -200,6 +200,7 @@ const text = {
       "Plotip is an open-source IP geolocation tool. Lookups run on the server. History stays in your current browser tab and is cleared when the tab closes. No account or IP database download is needed.",
     accuracy:
       "IP geolocation is not device positioning. Proxies, VPNs, network gateways and aging records can affect results. Map coordinates represent the matched region.",
+    contact: "Contact",
     sources: "Data sources",
     data: "IP data: ip2region open-source database. Coordinates: GeoNames (CC BY 4.0) and Natural Earth (public domain). Basemap: Natural Earth; boundaries follow its dataset.",
     privacy:
@@ -498,7 +499,7 @@ function renderLanguage() {
   }
   if (!$("map-loading").hidden) $("map-loading").textContent = t().loadingMap;
   $("about-content").innerHTML =
-    `<img src="/favicon.svg" width="40" height="40" alt=""/><h2 id="about-title">${t().aboutTitle}</h2><p class="dialog-lead">${t().aboutLead}</p><p>${t().aboutBody}</p><p>${t().accuracy}</p><h3>${t().sources}</h3><p>${t().data}</p><div class="source-links"><a href="https://github.com/lionsoul2014/ip2region" target="_blank" rel="noopener noreferrer">ip2region</a><a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div><p class="privacy-note">${t().privacy}</p><a href="https://github.com/shanezchang/plotip" target="_blank" rel="noopener noreferrer">GitHub ${icon("ArrowUpRight")}</a>`;
+    `<img src="/favicon.svg" width="40" height="40" alt=""/><h2 id="about-title">${t().aboutTitle}</h2><p class="dialog-lead">${t().aboutLead}</p><p>${t().aboutBody}</p><p>${t().accuracy}</p><h3>${t().sources}</h3><p>${t().data}</p><div class="source-links"><a href="https://github.com/lionsoul2014/ip2region" target="_blank" rel="noopener noreferrer">ip2region</a><a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a></div><p class="privacy-note">${t().privacy}</p><p class="contact-link">${t().contact}: <a href="mailto:shanechang@agentmail.to">shanechang@agentmail.to</a></p><a href="https://github.com/shanezchang/plotip" target="_blank" rel="noopener noreferrer">GitHub ${icon("ArrowUpRight")}</a>`;
   setBusy(busy);
   renderResult();
   renderHistory();
